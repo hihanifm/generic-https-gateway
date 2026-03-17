@@ -1,0 +1,11 @@
+{
+  "name": "gateway-demo-app2",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Demo upstream app2 for HTTPS gateway template",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT"
+}

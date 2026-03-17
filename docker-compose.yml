@@ -1,0 +1,46 @@
+services:
+  gateway:
+    image: caddy:2-alpine
+    container_name: https-gateway
+    restart: unless-stopped
+    ports:
+      - "${EXTERNAL_HTTPS_PORT}:${EXTERNAL_HTTPS_PORT}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    depends_on:
+      - app1
+      - app2
+    networks:
+      - internal
+
+  app1:
+    build:
+      context: ./services/app1
+    container_name: app1
+    restart: unless-stopped
+    environment:
+      - PORT=${APP1_PORT}
+      - APP_NAME=app1
+    expose:
+      - "${APP1_PORT}"
+    networks:
+      - internal
+
+  app2:
+    build:
+      context: ./services/app2
+    container_name: app2
+    restart: unless-stopped
+    environment:
+      - PORT=${APP2_PORT}
+      - APP_NAME=app2
+    expose:
+      - "${APP2_PORT}"
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
