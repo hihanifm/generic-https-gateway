@@ -367,9 +367,25 @@
       .join("");
   }
 
+  /** Decorative server graphic for tile fronts (inline SVG, no network). */
+  const TILE_SERVER_ART = `
+    <div class="tileArt" aria-hidden="true">
+      <svg class="tileServerSvg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg" focusable="false">
+        <rect x="8" y="10" width="48" height="44" rx="4" fill="none" stroke="currentColor" stroke-width="2" opacity="0.32"/>
+        <rect x="14" y="16" width="36" height="10" rx="2" fill="currentColor" opacity="0.14"/>
+        <rect x="14" y="30" width="36" height="10" rx="2" fill="currentColor" opacity="0.1"/>
+        <rect x="14" y="44" width="36" height="4" rx="1" fill="currentColor" opacity="0.12"/>
+        <circle cx="20" cy="21" r="2" fill="currentColor" opacity="0.45"/>
+        <circle cx="44" cy="21" r="2" fill="currentColor" opacity="0.28"/>
+        <circle cx="20" cy="35" r="2" fill="currentColor" opacity="0.28"/>
+        <circle cx="44" cy="35" r="2" fill="currentColor" opacity="0.28"/>
+      </svg>
+    </div>
+  `;
+
   function tileTemplate(svc, status) {
     const title = escapeHtml(svc.name || svc.id || "Service");
-    const desc = escapeHtml(svc.description || "");
+    const desc = svc.description ? escapeHtml(svc.description) : "";
     const path = normalizePath(svc.path || "/");
     const healthPath = svc.healthPath ? normalizePath(svc.healthPath) : "";
     const external = isAbsoluteUrl(path);
@@ -378,25 +394,84 @@
     const badgeText = status?.label || "Unknown";
     const badgeTitle = status?.detail || "";
 
-    const metaParts = [
+    const metaRows = [
       `<span class="badge ${badgeClass}" title="${escapeHtml(badgeTitle)}"><span class="dot"></span>${escapeHtml(
         badgeText
       )}</span>`,
-      `<span><code>${escapeHtml(path)}</code></span>`
+      `<div class="tileBackPath"><code>${escapeHtml(path)}</code></div>`
     ];
-    if (healthPath) metaParts.push(`<span class="muted">health: <code>${escapeHtml(healthPath)}</code></span>`);
+    if (healthPath) {
+      metaRows.push(`<div class="tileBackPath muted">health: <code>${escapeHtml(healthPath)}</code></div>`);
+    }
 
     const targetAttrs = external ? ` target="_blank" rel="noreferrer noopener"` : "";
 
+    const descBlock = desc ? `<div class="tileDesc tileBackDesc">${desc}</div>` : "";
+
     return `
-      <a class="tile" href="${escapeHtml(path)}"${targetAttrs}>
-        <div class="tileTop">
-          <div class="tileTitle">${title}</div>
+      <div class="tile">
+        <div class="tileScene">
+          <div class="tileFlip">
+            <div class="tileFace tileFace--front">
+              <a class="tileNav" href="${escapeHtml(path)}"${targetAttrs}>
+                ${TILE_SERVER_ART}
+                <div class="tileTitle">${title}</div>
+              </a>
+              <button type="button" class="tileInfoBtn" aria-label="Show service details" aria-expanded="false">
+                <svg class="tileInfoIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                  <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.75" opacity="0.85"/>
+                  <path fill="currentColor" d="M11 10h2v8h-2v-8zm0-4h2v2h-2V6z" opacity="0.9"/>
+                </svg>
+              </button>
+            </div>
+            <div class="tileFace tileFace--back">
+              <div class="tileBackInner">
+                ${descBlock}
+                <div class="tileMeta tileMeta--stack">${metaRows.join("")}</div>
+                <div class="tileBackActions">
+                  <button type="button" class="btn tileFlipBack">Back</button>
+                  <a class="link tileOpenLink" href="${escapeHtml(path)}"${targetAttrs}>Open service</a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        ${desc ? `<div class="tileDesc">${desc}</div>` : `<div class="tileDesc"></div>`}
-        <div class="tileMeta">${metaParts.join("")}</div>
-      </a>
+      </div>
     `;
+  }
+
+  let tileFlipDelegationAttached = false;
+
+  function attachTileFlipDelegation() {
+    if (!elGrid || tileFlipDelegationAttached) return;
+    tileFlipDelegationAttached = true;
+    elGrid.addEventListener("click", (e) => {
+      const infoBtn = e.target?.closest?.(".tileInfoBtn");
+      if (infoBtn && elGrid.contains(infoBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const tile = infoBtn.closest(".tile");
+        if (!tile) return;
+        const flipped = tile.classList.toggle("is-flipped");
+        infoBtn.setAttribute("aria-expanded", flipped ? "true" : "false");
+        infoBtn.setAttribute("aria-label", flipped ? "Hide service details" : "Show service details");
+        return;
+      }
+
+      const backBtn = e.target?.closest?.(".tileFlipBack");
+      if (backBtn && elGrid.contains(backBtn)) {
+        e.preventDefault();
+        e.stopPropagation();
+        const tile = backBtn.closest(".tile");
+        if (!tile) return;
+        tile.classList.remove("is-flipped");
+        const info = tile.querySelector(".tileInfoBtn");
+        if (info) {
+          info.setAttribute("aria-expanded", "false");
+          info.setAttribute("aria-label", "Show service details");
+        }
+      }
+    });
   }
 
   async function fetchText(url) {
@@ -620,6 +695,7 @@
     main();
   });
 
+  attachTileFlipDelegation();
   main();
 })();
 

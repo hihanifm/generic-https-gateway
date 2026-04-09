@@ -41,6 +41,7 @@
   --warn-bg: rgba(255, 204, 102, 0.08);
   --bad-border: rgba(255, 92, 122, 0.35);
   --bad-bg: rgba(255, 92, 122, 0.08);
+  --hub-description-fg: rgba(255, 255, 255, 0.86);
 }
 
 html[data-theme="light"] {
@@ -81,6 +82,7 @@ html[data-theme="light"] {
   --warn-bg: rgba(255, 204, 102, 0.18);
   --bad-border: rgba(220, 60, 90, 0.4);
   --bad-bg: rgba(255, 92, 122, 0.12);
+  --hub-description-fg: rgba(15, 23, 42, 0.82);
 }
 
 * {
@@ -113,19 +115,36 @@ code {
   position: sticky;
   top: 0;
   z-index: 10;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
+  column-gap: 16px;
   padding: 18px 22px;
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
   background: var(--topbar-bg);
 }
 
+.topbarSpacer {
+  min-width: 0;
+}
+
+.topbarCenter {
+  justify-self: center;
+  max-width: min(72ch, 92vw);
+  text-align: center;
+}
+
+.topbarCenter .brand {
+  justify-content: center;
+}
+
 .topbarRight {
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-self: end;
+  min-width: 0;
 }
 
 .themeToggle {
@@ -191,15 +210,31 @@ code {
   box-shadow: 0 10px 35px var(--brand-shadow);
 }
 
+.brandHeadline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.35em 0.45em;
+}
+
+.brandHeadlineSep {
+  color: var(--muted);
+  font-weight: 400;
+  user-select: none;
+}
+
 .brandTitle {
-  font-weight: 650;
+  font-size: 1.22rem;
+  font-weight: 700;
   letter-spacing: 0.2px;
 }
 
 .brandSub {
-  font-size: 13px;
+  font-size: 0.92rem;
+  font-weight: 400;
+  font-style: italic;
   color: var(--muted);
-  margin-top: 2px;
 }
 
 .btn {
@@ -258,11 +293,34 @@ code {
 
 .hubDescription {
   margin: 0;
-  max-width: 72ch;
-  font-size: 14px;
-  line-height: 1.55;
-  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--hub-description-fg);
   white-space: pre-line;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    grid-template-columns: 1fr;
+    row-gap: 14px;
+    justify-items: stretch;
+  }
+
+  .topbarSpacer {
+    display: none;
+  }
+
+  .topbarCenter {
+    max-width: none;
+    order: 1;
+  }
+
+  .topbarRight {
+    justify-self: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    order: 2;
+  }
 }
 
 .panelTitle {
@@ -288,19 +346,9 @@ code {
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
-  overflow-x: auto;
   padding-bottom: 8px;
-  scrollbar-width: thin;
-}
-
-.tabs::-webkit-scrollbar {
-  height: 8px;
-}
-
-.tabs::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 999px;
 }
 
 .tab {
@@ -373,24 +421,165 @@ code {
 }
 
 .tile {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 16px;
+  color: var(--text);
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 14px;
   background: var(--tile-bg);
-  text-decoration: none;
-  color: var(--text);
-  position: relative;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease;
-  min-height: 112px;
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  min-height: 188px;
 }
 
 .tile:hover {
-  transform: translateY(-2px);
   background: var(--tile-hover-bg);
   border-color: var(--control-hover-border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+html[data-theme="light"] .tile:hover {
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.tileScene {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+  min-height: 188px;
+}
+
+.tileFlip {
+  position: relative;
+  width: 100%;
+  min-height: 188px;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+.tile.is-flipped .tileFlip {
+  transform: rotateY(180deg);
+}
+
+.tileFace {
+  position: absolute;
+  inset: 0;
+  border-radius: 13px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.tileFace--front {
+  display: block;
+  background: var(--tile-bg);
+}
+
+.tileFace--back {
+  transform: rotateY(180deg);
+  background: var(--tile-bg);
+}
+
+.tileNav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 100%;
+  min-height: 188px;
+  padding: 16px 44px 16px 16px;
+  text-decoration: none;
+  color: inherit;
+  outline-offset: 2px;
+}
+
+.tileNav:hover {
+  color: inherit;
+}
+
+.tileArt {
+  color: var(--muted);
+  line-height: 0;
+}
+
+.tileServerSvg {
+  width: 72px;
+  height: 72px;
+  display: block;
+}
+
+.tileFace--front .tileTitle {
+  text-align: center;
+}
+
+.tileInfoBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--control-bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.tileInfoBtn:hover {
+  background: var(--control-hover-bg);
+  border-color: var(--control-hover-border);
+}
+
+.tileInfoBtn:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.tileInfoIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.tileBackInner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 188px;
+  padding: 14px;
+  overflow: auto;
+}
+
+.tileBackDesc {
+  flex-shrink: 0;
+}
+
+.tileBackPath {
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.tileBackActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.tileOpenLink {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.tileFlipBack {
+  margin: 0;
 }
 
 .tileTop {
@@ -408,7 +597,11 @@ code {
 .tileDesc {
   color: var(--muted);
   font-size: 13px;
-  line-height: 1.3;
+  line-height: 1.35;
+}
+
+.muted {
+  color: var(--muted);
 }
 
 .tileMeta {
@@ -417,6 +610,18 @@ code {
   align-items: center;
   color: var(--muted);
   font-size: 12px;
+}
+
+.tileMeta--stack {
+  flex-direction: column;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tileFlip {
+    transition: none;
+  }
 }
 
 .badge {

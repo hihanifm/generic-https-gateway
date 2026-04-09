@@ -3,8 +3,13 @@ services:
     image: caddy:2-alpine
     container_name: generic-gateway
     restart: unless-stopped
+    # Caddy substitutes {$VAR} from the container environment at runtime — these must be set here.
+    environment:
+      - EXTERNAL_HTTP_PORT=${EXTERNAL_HTTP_PORT:-33001}
+      - APP1_PORT=${APP1_PORT:-33101}
+      - APP2_PORT=${APP2_PORT:-33102}
     ports:
-      - "${EXTERNAL_HTTP_PORT}:${EXTERNAL_HTTP_PORT}"
+      - "${EXTERNAL_HTTP_PORT:-33001}:${EXTERNAL_HTTP_PORT:-33001}"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./hub:/srv:ro
@@ -24,15 +29,23 @@ services:
     container_name: app1
     restart: unless-stopped
     environment:
-      - PORT=${APP1_PORT}
+      - PORT=${APP1_PORT:-33101}
       - APP_NAME=app1
     expose:
-      - "${APP1_PORT}"
+      - "${APP1_PORT:-33101}"
+    # Use Node for the probe: node:alpine often has no wget/curl; PORT must match the app.
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:${APP1_PORT}/health"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
     networks:
       - internal
 
@@ -42,15 +55,22 @@ services:
     container_name: app2
     restart: unless-stopped
     environment:
-      - PORT=${APP2_PORT}
+      - PORT=${APP2_PORT:-33102}
       - APP_NAME=app2
     expose:
-      - "${APP2_PORT}"
+      - "${APP2_PORT:-33102}"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:${APP2_PORT}/health"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 5s
       timeout: 3s
       retries: 5
+      start_period: 10s
     networks:
       - internal
 

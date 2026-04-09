@@ -1,3 +1,9 @@
+hub:
+  title: SmartOps Hub
+  tagline: Efficiency starts with the smallest workflows.
+  description: |
+    Operational excellence is built through thousands of small improvements. This hub brings together lightweight tools and workflows to eliminate repetitive work, streamline execution, and compound efficiency across the organization.
+
 services:
   - id: app1
     name: App 1

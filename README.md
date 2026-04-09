@@ -65,6 +65,27 @@ If you add more services, create more `@matcher` + `handle` blocks.
 
 Tiles shown on the hub page come from `hub/services.yml` (YAML).
 
+Optional **branding** for the landing page lives in the same file under a top-level `hub:` block:
+
+- `title` — browser tab title and main header
+- `tagline` — subtitle under the title in the top bar
+- `description` — longer intro text above the service tiles; use a YAML block scalar (`description: |`) for multiple lines
+
+```yaml
+hub:
+  title: SmartOps Hub
+  tagline: Efficiency starts with the smallest workflows.
+  description: |
+    One or more lines of text.
+
+services:
+  - id: app1
+    name: App 1
+    path: /service1/
+```
+
+If `hub:` is omitted, the page uses the default title and tagline and hides the description block.
+
 - The hub does **not** generate or modify `Caddyfile`.
 - To help catch drift, the hub performs lightweight runtime checks (prefers `healthPath` if provided) and shows a warning badge/banner if a tile looks out-of-sync with routing or an upstream is down.
 - You can also add **external or direct internal links** by setting `path` to an absolute URL (like `https://github.com/...` or `http://internal-tool.local/...`). By default, those links are **not health-checked** (to avoid CORS issues and because they may not be proxied).
