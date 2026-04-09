@@ -2,22 +2,83 @@
   /**
    * This hub is intentionally dependency-free. It supports a small YAML subset:
    *
+   * hub:
+   *   title: My Hub
+   *   tagline: Short subtitle
+   *   description: |
+   *     Multi-line text (block scalar)
+   *
    * services:
    *   - id: app1
    *     name: App 1
    *     path: /service1/
    *     healthPath: /service1/health
    *
-   * Only string scalars are supported. Quoted strings are allowed.
+   * Only string scalars are supported (plus hub.description as | block). Quoted strings are allowed.
    */
 
   const CONFIG_PATH = "/services.yml";
+  const DEFAULT_HUB_TITLE = "Gateway";
+  const DEFAULT_HUB_TAGLINE = "Choose a service";
+  const THEME_STORAGE_KEY = "hub-theme";
 
   const elGrid = document.getElementById("grid");
   const elWarnings = document.getElementById("warnings");
   const elOverall = document.getElementById("overallStatus");
   const elRefresh = document.getElementById("refreshBtn");
   const elTabs = document.getElementById("tabs");
+  const elHubTitle = document.getElementById("hubTitle");
+  const elHubTagline = document.getElementById("hubTagline");
+  const elHubDescription = document.getElementById("hubDescription");
+  const elHubDescriptionWrap = document.getElementById("hubDescriptionWrap");
+
+  function getStoredTheme() {
+    try {
+      const v = localStorage.getItem(THEME_STORAGE_KEY);
+      if (v === "light" || v === "dark") return v;
+    } catch (_) {}
+    return null;
+  }
+
+  function preferredTheme() {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+
+  function resolveTheme() {
+    return getStoredTheme() ?? preferredTheme();
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.dataset.theme = theme;
+    const light = document.getElementById("themeLight");
+    const dark = document.getElementById("themeDark");
+    if (light) light.checked = theme === "light";
+    if (dark) dark.checked = theme === "dark";
+  }
+
+  function initTheme() {
+    applyTheme(resolveTheme());
+
+    document.querySelectorAll('input[name="hub-theme"]').forEach((input) => {
+      input.addEventListener("change", () => {
+        if (!input.checked) return;
+        const v = input.value;
+        if (v !== "light" && v !== "dark") return;
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, v);
+        } catch (_) {}
+        applyTheme(v);
+      });
+    });
+
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", () => {
+      if (getStoredTheme() !== null) return;
+      applyTheme(mq.matches ? "dark" : "light");
+    });
+  }
+
+  initTheme();
 
   function escapeHtml(s) {
     return String(s)
@@ -36,22 +97,127 @@
     return line;
   }
 
-  function parseYamlServices(text) {
-    const lines = text
-      .replaceAll("\r\n", "\n")
-      .replaceAll("\r", "\n")
-      .split("\n");
+  function lineIndent(line) {
+    const m = String(line).match(/^(\s*)/);
+    return m ? m[1].length : 0;
+  }
 
-    const out = { services: [] };
-    let inServices = false;
-    let current = null;
+  function dedentBlockScalar(rawLines) {
+    const nonempty = rawLines.filter((l) => String(l).trim() !== "");
+    if (nonempty.length === 0) return "";
+    let min = Infinity;
+    for (const l of nonempty) {
+      const ind = lineIndent(l);
+      if (ind < min) min = ind;
+    }
+    const dedented = rawLines.map((l) => {
+      if (String(l).trim() === "") return "";
+      return l.length >= min ? l.slice(min) : String(l).trimEnd();
+    });
+    return dedented.join("\n").replace(/\n+$/, "");
+  }
 
-    for (let raw of lines) {
-      raw = stripInlineComment(raw);
-      if (!raw.trim()) continue;
+  function parseHubYaml(text) {
+    const rawLines = text.replaceAll("\r\n", "\n").replaceAll("\r", "\n").split("\n");
+    const lines = rawLines.map((raw) => stripInlineComment(raw).replace(/\t/g, "  "));
 
-      const line = raw.replace(/\t/g, "  ");
+    const hub = {};
+    const services = [];
+    let mode = "top"; // top, hub, hub_desc, services
+    let hubKeyIndent = 0;
+    let descRawLines = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
       const trimmed = line.trim();
+      const indent = lineIndent(line);
+
+      if (mode === "top") {
+        if (!trimmed) {
+          i++;
+          continue;
+        }
+        if (trimmed === "hub:" || trimmed.startsWith("hub:")) {
+          mode = "hub";
+          i++;
+          continue;
+        }
+        if (trimmed === "services:" || trimmed.startsWith("services:")) {
+          mode = "services";
+          break;
+        }
+        i++;
+        continue;
+      }
+
+      if (mode === "hub") {
+        if (!trimmed) {
+          i++;
+          continue;
+        }
+        if (indent === 0 && (trimmed === "services:" || trimmed.startsWith("services:"))) {
+          mode = "services";
+          break;
+        }
+        const hm = trimmed.match(/^([a-zA-Z0-9_-]+):\s*(.*)$/);
+        if (hm) {
+          const key = hm[1];
+          const rest = hm[2].trim();
+          if (key === "description" && (rest === "|" || rest === "|-" || rest === "|+")) {
+            hubKeyIndent = indent;
+            mode = "hub_desc";
+            descRawLines = [];
+            i++;
+            continue;
+          }
+          if (rest) hub[key] = parseYamlScalar(rest);
+        }
+        i++;
+        continue;
+      }
+
+      if (mode === "hub_desc") {
+        if (trimmed === "") {
+          descRawLines.push("");
+          i++;
+          continue;
+        }
+        if (indent === 0 && (trimmed === "services:" || trimmed.startsWith("services:"))) {
+          hub.description = dedentBlockScalar(descRawLines);
+          mode = "services";
+          break;
+        }
+        if (indent <= hubKeyIndent && /^[a-zA-Z0-9_-]+:/.test(trimmed)) {
+          hub.description = dedentBlockScalar(descRawLines);
+          mode = "hub";
+          continue;
+        }
+        if (indent > hubKeyIndent) {
+          descRawLines.push(line);
+          i++;
+          continue;
+        }
+        hub.description = dedentBlockScalar(descRawLines);
+        mode = "hub";
+        continue;
+      }
+    }
+
+    if (mode === "hub_desc") {
+      hub.description = dedentBlockScalar(descRawLines);
+    }
+
+    let inServices = mode === "services";
+    let current = null;
+    if (inServices && i < lines.length) {
+      i++;
+    }
+
+    for (; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+      if (!trimmed) continue;
 
       if (!inServices) {
         if (trimmed === "services:" || trimmed.startsWith("services:")) {
@@ -61,11 +227,13 @@
       }
 
       if (trimmed.startsWith("- ")) {
-        if (current) out.services.push(current);
+        if (current) services.push(current);
         current = {};
         const rest = trimmed.slice(2).trim();
         if (rest) {
-          const [k, v] = rest.split(/:(.+)/).map((s) => s?.trim());
+          const parts = rest.split(/:(.+)/);
+          const k = parts[0]?.trim();
+          const v = parts[1]?.trim();
           if (k && v != null && v !== "") current[k] = parseYamlScalar(v);
         }
         continue;
@@ -80,10 +248,28 @@
       }
     }
 
-    if (current) out.services.push(current);
+    if (current) services.push(current);
 
-    if (!Array.isArray(out.services)) out.services = [];
-    return out;
+    return { hub, services };
+  }
+
+  function applyHubBranding(h) {
+    const title = (h?.title && String(h.title).trim()) || DEFAULT_HUB_TITLE;
+    const tagline = (h?.tagline && String(h.tagline).trim()) || DEFAULT_HUB_TAGLINE;
+    const desc = (h?.description && String(h.description).trim()) || "";
+
+    document.title = title;
+    if (elHubTitle) elHubTitle.textContent = title;
+    if (elHubTagline) elHubTagline.textContent = tagline;
+    if (elHubDescription && elHubDescriptionWrap) {
+      if (desc) {
+        elHubDescription.textContent = desc;
+        elHubDescriptionWrap.hidden = false;
+      } else {
+        elHubDescription.textContent = "";
+        elHubDescriptionWrap.hidden = true;
+      }
+    }
   }
 
   function parseYamlScalar(value) {
@@ -319,7 +505,8 @@
   async function loadAndRender() {
     elOverall.textContent = "Loading config…";
     const configText = await fetchText(CONFIG_PATH);
-    const parsed = parseYamlServices(configText);
+    const parsed = parseHubYaml(configText);
+    applyHubBranding(parsed.hub || {});
     const services = (parsed.services || []).filter((s) => s && (s.id || s.name || s.path));
 
     if (!services.length) {

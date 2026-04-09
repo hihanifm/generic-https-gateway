@@ -4,6 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gateway</title>
+    <script>
+      (function () {
+        try {
+          var k = "hub-theme";
+          var v = localStorage.getItem(k);
+          if (v === "light" || v === "dark") {
+            document.documentElement.dataset.theme = v;
+            return;
+          }
+        } catch (e) {}
+        var dark =
+          window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
@@ -11,11 +26,33 @@
       <div class="brand">
         <div class="brandMark" aria-hidden="true"></div>
         <div>
-          <div class="brandTitle">Gateway</div>
-          <div class="brandSub">Choose a service</div>
+          <div id="hubTitle" class="brandTitle">Gateway</div>
+          <div id="hubTagline" class="brandSub">Choose a service</div>
         </div>
       </div>
       <div class="topbarRight">
+        <div class="themeToggle" role="radiogroup" aria-label="Theme">
+          <label class="themeLabel">
+            <input
+              class="themeRadio"
+              type="radio"
+              name="hub-theme"
+              id="themeLight"
+              value="light"
+            />
+            <span>Light</span>
+          </label>
+          <label class="themeLabel">
+            <input
+              class="themeRadio"
+              type="radio"
+              name="hub-theme"
+              id="themeDark"
+              value="dark"
+            />
+            <span>Dark</span>
+          </label>
+        </div>
         <button id="refreshBtn" class="btn" type="button">Refresh status</button>
       </div>
     </header>
@@ -30,6 +67,10 @@
             </div>
           </div>
           <div id="overallStatus" class="overallStatus" aria-live="polite"></div>
+        </div>
+
+        <div id="hubDescriptionWrap" class="hubDescriptionWrap" hidden>
+          <p id="hubDescription" class="hubDescription"></p>
         </div>
 
         <div class="tabsWrap" aria-label="Categories">

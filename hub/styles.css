@@ -1,18 +1,86 @@
 /* Hub styles: intentionally dependency-free */
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   --bg: #0b1020;
-  --surface: rgba(255, 255, 255, 0.06);
-  --surface2: rgba(255, 255, 255, 0.09);
-  --border: rgba(255, 255, 255, 0.12);
   --text: rgba(255, 255, 255, 0.92);
   --muted: rgba(255, 255, 255, 0.65);
+  --border: rgba(255, 255, 255, 0.12);
   --good: #35d07f;
   --warn: #ffcc66;
   --bad: #ff5c7a;
   --link: #9ad1ff;
   --shadow: 0 18px 55px rgba(0, 0, 0, 0.35);
+  --grad-a: rgba(78, 140, 255, 0.22);
+  --grad-b: rgba(53, 208, 127, 0.18);
+  --grad-c: rgba(255, 92, 122, 0.14);
+  --code-fg: rgba(255, 255, 255, 0.88);
+  --topbar-bg: rgba(7, 10, 20, 0.65);
+  --control-bg: rgba(255, 255, 255, 0.04);
+  --control-hover-bg: rgba(255, 255, 255, 0.07);
+  --control-hover-border: rgba(255, 255, 255, 0.18);
+  --panel-fill: rgba(255, 255, 255, 0.04);
+  --panel-header-bg: rgba(255, 255, 255, 0.03);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
+  --tab-bg: rgba(255, 255, 255, 0.03);
+  --tab-hover-bg: rgba(255, 255, 255, 0.06);
+  --tab-selected-bg: rgba(154, 209, 255, 0.12);
+  --tab-selected-border: rgba(154, 209, 255, 0.28);
+  --warning-border: rgba(255, 204, 102, 0.25);
+  --warning-bg: rgba(255, 204, 102, 0.07);
+  --warning-text: rgba(255, 255, 255, 0.88);
+  --warning-strong: rgba(255, 255, 255, 0.95);
+  --tile-bg: rgba(255, 255, 255, 0.035);
+  --tile-hover-bg: rgba(255, 255, 255, 0.055);
+  --badge-bg: rgba(255, 255, 255, 0.04);
+  --dot-idle: rgba(255, 255, 255, 0.3);
+  --brand-shadow: rgba(154, 209, 255, 0.25);
+  --good-border: rgba(53, 208, 127, 0.35);
+  --good-bg: rgba(53, 208, 127, 0.08);
+  --warn-border: rgba(255, 204, 102, 0.35);
+  --warn-bg: rgba(255, 204, 102, 0.08);
+  --bad-border: rgba(255, 92, 122, 0.35);
+  --bad-bg: rgba(255, 92, 122, 0.08);
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+  --bg: #eef1f8;
+  --text: rgba(15, 23, 42, 0.92);
+  --muted: rgba(15, 23, 42, 0.55);
+  --border: rgba(15, 23, 42, 0.12);
+  --link: #1560a8;
+  --shadow: 0 18px 55px rgba(15, 23, 42, 0.1);
+  --grad-a: rgba(78, 140, 255, 0.2);
+  --grad-b: rgba(53, 208, 127, 0.14);
+  --grad-c: rgba(255, 92, 122, 0.1);
+  --code-fg: rgba(15, 23, 42, 0.82);
+  --topbar-bg: rgba(255, 255, 255, 0.75);
+  --control-bg: rgba(15, 23, 42, 0.04);
+  --control-hover-bg: rgba(15, 23, 42, 0.08);
+  --control-hover-border: rgba(15, 23, 42, 0.2);
+  --panel-fill: rgba(255, 255, 255, 0.82);
+  --panel-header-bg: rgba(255, 255, 255, 0.65);
+  --scrollbar-thumb: rgba(15, 23, 42, 0.18);
+  --tab-bg: rgba(15, 23, 42, 0.04);
+  --tab-hover-bg: rgba(15, 23, 42, 0.08);
+  --tab-selected-bg: rgba(21, 96, 168, 0.12);
+  --tab-selected-border: rgba(21, 96, 168, 0.32);
+  --warning-border: rgba(180, 130, 0, 0.35);
+  --warning-bg: rgba(255, 204, 102, 0.22);
+  --warning-text: rgba(15, 23, 42, 0.88);
+  --warning-strong: rgba(15, 23, 42, 0.95);
+  --tile-bg: rgba(255, 255, 255, 0.72);
+  --tile-hover-bg: rgba(255, 255, 255, 0.95);
+  --badge-bg: rgba(15, 23, 42, 0.05);
+  --dot-idle: rgba(15, 23, 42, 0.28);
+  --brand-shadow: rgba(21, 96, 168, 0.22);
+  --good-border: rgba(40, 160, 100, 0.4);
+  --good-bg: rgba(53, 208, 127, 0.12);
+  --warn-border: rgba(200, 150, 40, 0.4);
+  --warn-bg: rgba(255, 204, 102, 0.18);
+  --bad-border: rgba(220, 60, 90, 0.4);
+  --bad-bg: rgba(255, 92, 122, 0.12);
 }
 
 * {
@@ -28,9 +96,9 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
     Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  background: radial-gradient(1200px 600px at 20% 5%, rgba(78, 140, 255, 0.22), transparent 60%),
-    radial-gradient(900px 500px at 80% 10%, rgba(53, 208, 127, 0.18), transparent 60%),
-    radial-gradient(1000px 700px at 50% 90%, rgba(255, 92, 122, 0.14), transparent 65%),
+  background: radial-gradient(1200px 600px at 20% 5%, var(--grad-a), transparent 60%),
+    radial-gradient(900px 500px at 80% 10%, var(--grad-b), transparent 60%),
+    radial-gradient(1000px 700px at 50% 90%, var(--grad-c), transparent 65%),
     var(--bg);
   color: var(--text);
 }
@@ -38,7 +106,7 @@ body {
 code {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
     "Courier New", monospace;
-  color: rgba(255, 255, 255, 0.88);
+  color: var(--code-fg);
 }
 
 .topbar {
@@ -51,7 +119,62 @@ code {
   padding: 18px 22px;
   border-bottom: 1px solid var(--border);
   backdrop-filter: blur(12px);
-  background: rgba(7, 10, 20, 0.65);
+  background: var(--topbar-bg);
+}
+
+.topbarRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.themeToggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.themeLabel {
+  position: relative;
+  margin: 0;
+  cursor: pointer;
+}
+
+.themeLabel + .themeLabel {
+  border-left: 1px solid var(--border);
+}
+
+.themeRadio {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+}
+
+.themeLabel span {
+  display: block;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.2;
+  background: var(--control-bg);
+  color: var(--text);
+  transition: background 120ms ease;
+}
+
+.themeLabel:hover span {
+  background: var(--control-hover-bg);
+}
+
+.themeRadio:focus-visible + span {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+}
+
+.themeRadio:checked + span {
+  background: var(--tab-selected-bg);
+  font-weight: 600;
 }
 
 .brand {
@@ -65,7 +188,7 @@ code {
   height: 14px;
   border-radius: 4px;
   background: linear-gradient(135deg, rgba(154, 209, 255, 1), rgba(53, 208, 127, 1));
-  box-shadow: 0 10px 35px rgba(154, 209, 255, 0.25);
+  box-shadow: 0 10px 35px var(--brand-shadow);
 }
 
 .brandTitle {
@@ -82,7 +205,7 @@ code {
 .btn {
   appearance: none;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--control-bg);
   color: var(--text);
   border-radius: 10px;
   padding: 10px 12px;
@@ -91,8 +214,8 @@ code {
 }
 
 .btn:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--control-hover-bg);
+  border-color: var(--control-hover-border);
   transform: translateY(-1px);
 }
 
@@ -109,7 +232,7 @@ code {
 .panel {
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--panel-fill);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -121,7 +244,25 @@ code {
   gap: 18px;
   padding: 18px 18px 14px;
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--panel-header-bg);
+}
+
+.hubDescriptionWrap {
+  padding: 16px 18px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.hubDescriptionWrap[hidden] {
+  display: none;
+}
+
+.hubDescription {
+  margin: 0;
+  max-width: 72ch;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--muted);
+  white-space: pre-line;
 }
 
 .panelTitle {
@@ -158,14 +299,14 @@ code {
 }
 
 .tabs::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
 }
 
 .tab {
   appearance: none;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--tab-bg);
   color: var(--text);
   border-radius: 999px;
   padding: 8px 12px;
@@ -176,14 +317,14 @@ code {
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--tab-hover-bg);
+  border-color: var(--control-hover-border);
   transform: translateY(-1px);
 }
 
 .tab[aria-selected="true"] {
-  background: rgba(154, 209, 255, 0.12);
-  border-color: rgba(154, 209, 255, 0.28);
+  background: var(--tab-selected-bg);
+  border-color: var(--tab-selected-border);
 }
 
 .tabCount {
@@ -202,14 +343,14 @@ code {
   align-items: flex-start;
   gap: 10px;
   padding: 12px 12px;
-  border: 1px solid rgba(255, 204, 102, 0.25);
+  border: 1px solid var(--warning-border);
   border-radius: 12px;
-  background: rgba(255, 204, 102, 0.07);
-  color: rgba(255, 255, 255, 0.88);
+  background: var(--warning-bg);
+  color: var(--warning-text);
 }
 
 .warning strong {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--warning-strong);
 }
 
 .grid {
@@ -238,7 +379,7 @@ code {
   padding: 16px;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--tile-bg);
   text-decoration: none;
   color: var(--text);
   position: relative;
@@ -248,8 +389,8 @@ code {
 
 .tile:hover {
   transform: translateY(-2px);
-  background: rgba(255, 255, 255, 0.055);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: var(--tile-hover-bg);
+  border-color: var(--control-hover-border);
 }
 
 .tileTop {
@@ -285,7 +426,7 @@ code {
   border-radius: 999px;
   padding: 6px 10px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--badge-bg);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -294,12 +435,12 @@ code {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--dot-idle);
 }
 
 .badge.good {
-  border-color: rgba(53, 208, 127, 0.35);
-  background: rgba(53, 208, 127, 0.08);
+  border-color: var(--good-border);
+  background: var(--good-bg);
 }
 
 .badge.good .dot {
@@ -307,8 +448,8 @@ code {
 }
 
 .badge.warn {
-  border-color: rgba(255, 204, 102, 0.35);
-  background: rgba(255, 204, 102, 0.08);
+  border-color: var(--warn-border);
+  background: var(--warn-bg);
 }
 
 .badge.warn .dot {
@@ -316,8 +457,8 @@ code {
 }
 
 .badge.bad {
-  border-color: rgba(255, 92, 122, 0.35);
-  background: rgba(255, 92, 122, 0.08);
+  border-color: var(--bad-border);
+  background: var(--bad-bg);
 }
 
 .badge.bad .dot {
