@@ -10,8 +10,10 @@ services:
       - ./caddy_data:/data
       - ./caddy_config:/config
     depends_on:
-      - app1
-      - app2
+      app1:
+        condition: service_healthy
+      app2:
+        condition: service_healthy
     networks:
       - internal
 
@@ -25,6 +27,11 @@ services:
       - APP_NAME=app1
     expose:
       - "${APP1_PORT}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${APP1_PORT}/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - internal
 
@@ -38,6 +45,11 @@ services:
       - APP_NAME=app2
     expose:
       - "${APP2_PORT}"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${APP2_PORT}/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - internal
 

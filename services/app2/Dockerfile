@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package.json ./
 COPY server.js ./
 
-EXPOSE 33102
+ARG PORT=33102
+EXPOSE ${PORT}
 
 CMD ["npm", "start"]

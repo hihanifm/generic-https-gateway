@@ -1,4 +1,9 @@
 :{$EXTERNAL_HTTP_PORT} {
+	log {
+		output stderr
+		level INFO
+	}
+
 	# Route requests under /service2 to app2.
 	@service2 path /service2*
 	handle @service2 {
