@@ -6,7 +6,8 @@ Reusable Caddy + Docker Compose template for the common case where firewall rule
 
 - HTTP gateway on one fixed external port.
 - Path-based routing to internal apps:
-  - `/` -> `app1`
+  - `/` -> hub landing page (static)
+  - `/service1/*` -> `app1`
   - `/service2/*` -> `app2`
 - Upstream apps are private to Docker network (not publicly exposed).
 - Works for normal HTTP, SSE, and WebSockets behind the proxy.
@@ -15,6 +16,7 @@ Reusable Caddy + Docker Compose template for the common case where firewall rule
 
 - `docker-compose.yml`: gateway + two demo upstream services
 - `Caddyfile`: HTTP listener and path routing rules
+- `hub/`: static landing page + service catalog (`services.yml`)
 - `.env.example`: configurable ports
 - `services/app1`, `services/app2`: tiny demo HTTP apps
 
@@ -35,8 +37,11 @@ docker compose up --build -d
 3. Check services via HTTP:
 
 ```bash
-# app1 (default route)
+# hub landing page
 curl "http://localhost:33001/"
+
+# app1 (path-routed)
+curl "http://localhost:33001/service1/health"
 
 # app2 (path-routed)
 curl "http://localhost:33001/service2/health"
@@ -48,11 +53,25 @@ No certificate setup is needed in this HTTP-only template.
 
 The key logic in `Caddyfile`:
 
+- `/` serves the hub static files (from `hub/`)
+- requests matching `/service1*` are sent to `app1`
 - requests matching `/service2*` are sent to `app2`
-- all other requests are sent to `app1`
+- `/service1` and `/service2` prefixes are stripped before forwarding upstream
 - `/service2` prefix is stripped before forwarding to `app2`
 
 If you add more services, create more `@matcher` + `handle` blocks.
+
+## Hub service catalog (`hub/services.yml`)
+
+Tiles shown on the hub page come from `hub/services.yml` (YAML).
+
+- The hub does **not** generate or modify `Caddyfile`.
+- To help catch drift, the hub performs lightweight runtime checks (prefers `healthPath` if provided) and shows a warning badge/banner if a tile looks out-of-sync with routing or an upstream is down.
+
+### Caching notes
+
+- `services.yml` is served with `Cache-Control: no-store` so changes show up immediately on refresh.
+- `*.css` and `*.js` are served with a short cache (`max-age=3600`) for snappier reloads.
 
 ## Use with PM2 apps (without Docker upstreams)
 

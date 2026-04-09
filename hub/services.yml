@@ -1,0 +1,12 @@
+services:
+  - id: app1
+    name: App 1
+    description: Default upstream service
+    path: /service1/
+    healthPath: /service1/health
+
+  - id: app2
+    name: App 2
+    description: Secondary upstream service
+    path: /service2/
+    healthPath: /service2/health

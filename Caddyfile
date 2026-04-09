@@ -4,6 +4,13 @@
 		level INFO
 	}
 
+	# Route requests under /service1 to app1.
+	@service1 path /service1*
+	handle @service1 {
+		uri strip_prefix /service1
+		reverse_proxy app1:{$APP1_PORT}
+	}
+
 	# Route requests under /service2 to app2.
 	@service2 path /service2*
 	handle @service2 {
@@ -11,8 +18,19 @@
 		reverse_proxy app2:{$APP2_PORT}
 	}
 
-	# Everything else goes to app1.
-	handle {
-		reverse_proxy app1:{$APP1_PORT}
-	}
+	# Hub landing page (static).
+	root * /srv
+
+	# Keep the service catalog fresh to reduce config drift confusion.
+	@hubConfig path /services.yml
+	header @hubConfig Cache-Control "no-store"
+
+	# Cache static assets briefly for snappier reloads.
+	@hubAssets path *.css *.js
+	header @hubAssets Cache-Control "public, max-age=3600"
+
+	@hubHtml path / /index.html
+	header @hubHtml Cache-Control "no-store"
+
+	file_server
 }
