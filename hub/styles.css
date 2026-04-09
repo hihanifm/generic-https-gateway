@@ -141,6 +141,56 @@ code {
   text-align: right;
 }
 
+.tabsWrap {
+  padding: 12px 18px 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.tabs::-webkit-scrollbar {
+  height: 8px;
+}
+
+.tabs::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+
+.tab {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+  transition: transform 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
+}
+
+.tab[aria-selected="true"] {
+  background: rgba(154, 209, 255, 0.12);
+  border-color: rgba(154, 209, 255, 0.28);
+}
+
+.tabCount {
+  margin-left: 8px;
+  color: var(--muted);
+}
+
 .warnings {
   display: grid;
   gap: 10px;

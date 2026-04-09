@@ -17,6 +17,7 @@
   const elWarnings = document.getElementById("warnings");
   const elOverall = document.getElementById("overallStatus");
   const elRefresh = document.getElementById("refreshBtn");
+  const elTabs = document.getElementById("tabs");
 
   function escapeHtml(s) {
     return String(s)
@@ -100,12 +101,84 @@
     return v.startsWith("http://") || v.startsWith("https://");
   }
 
+  function parseCategories(raw) {
+    const s = String(raw ?? "").trim();
+    if (!s) return [];
+    return s
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean);
+  }
+
+  function categoryKey(label) {
+    return String(label ?? "").trim().toLowerCase();
+  }
+
+  function serviceKey(svc) {
+    return String(svc?.id || svc?.path || "");
+  }
+
   function normalizePath(p) {
     if (!p) return "/";
     let s = String(p).trim();
     if (isAbsoluteUrl(s)) return s;
     if (!s.startsWith("/")) s = "/" + s;
     return s;
+  }
+
+  function tabLabelFromKey(key) {
+    // Prefer config-provided label; this is only a fallback.
+    return String(key)
+      .split(/[-_]/g)
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  }
+
+  function buildCategoryIndex(services) {
+    const idx = new Map(); // key -> { key, label, services[] }
+    let hasUncategorized = false;
+
+    for (const svc of services) {
+      const cats = parseCategories(svc.categories);
+      if (!cats.length) hasUncategorized = true;
+      for (const c of cats) {
+        const k = categoryKey(c);
+        if (!k) continue;
+        if (!idx.has(k)) idx.set(k, { key: k, label: c, services: [] });
+        idx.get(k).services.push(svc);
+      }
+    }
+
+    return { idx, hasUncategorized };
+  }
+
+  function filterByCategory(services, selectedKey) {
+    if (selectedKey === "all") return services;
+    if (selectedKey === "uncategorized") {
+      return services.filter((s) => parseCategories(s.categories).length === 0);
+    }
+    return services.filter((s) => parseCategories(s.categories).some((c) => categoryKey(c) === selectedKey));
+  }
+
+  function renderTabs({ services, categoryIndex, hasUncategorized, selectedKey }) {
+    if (!elTabs) return;
+
+    const uniqueCats = Array.from(categoryIndex.values()).sort((a, b) => a.key.localeCompare(b.key));
+    const tabs = [
+      { key: "all", label: "All", count: services.length },
+      ...uniqueCats.map((c) => ({ key: c.key, label: c.label || tabLabelFromKey(c.key), count: c.services.length }))
+    ];
+    if (hasUncategorized) tabs.push({ key: "uncategorized", label: "Uncategorized", count: filterByCategory(services, "uncategorized").length });
+
+    elTabs.innerHTML = tabs
+      .map((t) => {
+        const selected = t.key === selectedKey;
+        return `<button class="tab" type="button" role="tab" aria-selected="${selected ? "true" : "false"}" data-tab="${escapeHtml(
+          t.key
+        )}">${escapeHtml(t.label)}<span class="tabCount">${t.count}</span></button>`;
+      })
+      .join("");
   }
 
   function tileTemplate(svc, status) {
@@ -257,42 +330,86 @@
       return;
     }
 
-    elOverall.textContent = `Loaded ${services.length} service${services.length === 1 ? "" : "s"}. Checking status…`;
+    const statusCache = new Map(); // serviceKey -> status
+    const { idx: categoryIndex, hasUncategorized } = buildCategoryIndex(services);
+    let selectedKey = "all";
 
-    // Render tiles quickly (unknown status), then update status badges.
-    elGrid.innerHTML = services.map((svc) => tileTemplate(svc, { kind: "warn", label: "Checking…" })).join("");
+    function renderSelected() {
+      const visible = filterByCategory(services, selectedKey);
+      renderTabs({ services, categoryIndex, hasUncategorized, selectedKey });
 
-    // Validate in parallel but with a small cap on concurrency to avoid spiking upstreams.
-    const concurrency = 6;
-    const statuses = new Array(services.length);
-    let idx = 0;
-
-    async function worker() {
-      while (idx < services.length) {
-        const i = idx++;
-        statuses[i] = await validateService(services[i]);
-        const tile = elGrid.children[i];
-        if (tile) {
-          tile.outerHTML = tileTemplate(services[i], statuses[i]);
-        }
+      if (!visible.length) {
+        elGrid.innerHTML = `<div class="tileDesc">No services in this category.</div>`;
+        renderWarnings([]);
+        elOverall.textContent = `Status: 0/0 up.`;
+        return;
       }
+
+      // Render visible tiles using cached statuses if present.
+      elGrid.innerHTML = visible
+        .map((svc) => {
+          const key = serviceKey(svc);
+          const st = statusCache.get(key) || { kind: "warn", label: "Checking…" };
+          return tileTemplate(svc, st);
+        })
+        .join("");
+
+      elOverall.textContent = `Showing ${visible.length}/${services.length}. Checking status…`;
+
+      // Validate only the visible services.
+      validateVisible(visible).catch(() => {
+        // Non-fatal: tile badges will show errors per-service.
+      });
     }
 
-    await Promise.all(Array.from({ length: Math.min(concurrency, services.length) }, () => worker()));
+    async function validateVisible(visibleServices) {
+      const concurrency = 6;
+      const statuses = new Array(visibleServices.length);
+      let idx2 = 0;
 
-    const warnings = services
-      .map((svc, i) => ({ svc, st: statuses[i] }))
-      .filter((x) => x.st.kind !== "good")
-      .map((x) => ({
-        name: x.svc.name || x.svc.id || "Service",
-        label: x.st.label,
-        detail: x.st.detail
-      }));
+      async function worker() {
+        while (idx2 < visibleServices.length) {
+          const i = idx2++;
+          const svc = visibleServices[i];
+          const st = await validateService(svc);
+          statuses[i] = st;
+          statusCache.set(serviceKey(svc), st);
 
-    renderWarnings(warnings);
+          // Update tile in-place if still visible and order unchanged.
+          const tile = elGrid.children[i];
+          if (tile) tile.outerHTML = tileTemplate(svc, st);
+        }
+      }
 
-    const upCount = statuses.filter((s) => s.kind === "good").length;
-    elOverall.textContent = `Status: ${upCount}/${services.length} up.`;
+      await Promise.all(Array.from({ length: Math.min(concurrency, visibleServices.length) }, () => worker()));
+
+      const warnings = visibleServices
+        .map((svc, i) => ({ svc, st: statuses[i] }))
+        .filter((x) => x.st && x.st.kind !== "good")
+        .map((x) => ({
+          name: x.svc.name || x.svc.id || "Service",
+          label: x.st.label,
+          detail: x.st.detail
+        }));
+      renderWarnings(warnings);
+
+      const upCount = statuses.filter((s) => s && s.kind === "good").length;
+      elOverall.textContent = `Status: ${upCount}/${visibleServices.length} up. (Showing ${visibleServices.length}/${services.length})`;
+    }
+
+    function attachTabHandlers() {
+      if (!elTabs) return;
+      elTabs.addEventListener("click", (e) => {
+        const btn = e.target?.closest?.("button[data-tab]");
+        const key = btn?.getAttribute?.("data-tab");
+        if (!key) return;
+        selectedKey = key;
+        renderSelected();
+      });
+    }
+
+    attachTabHandlers();
+    renderSelected();
   }
 
   async function main() {

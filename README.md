@@ -68,6 +68,7 @@ Tiles shown on the hub page come from `hub/services.yml` (YAML).
 - The hub does **not** generate or modify `Caddyfile`.
 - To help catch drift, the hub performs lightweight runtime checks (prefers `healthPath` if provided) and shows a warning badge/banner if a tile looks out-of-sync with routing or an upstream is down.
 - You can also add **external or direct internal links** by setting `path` to an absolute URL (like `https://github.com/...` or `http://internal-tool.local/...`). By default, those links are **not health-checked** (to avoid CORS issues and because they may not be proxied).
+- You can organize tiles into **categories** using a comma-separated `categories` field (a service can be in multiple categories). The hub will render tabs (including **All** and **Uncategorized**) and will only run status checks for tiles visible in the selected tab.
 
 ### Caching notes
 
