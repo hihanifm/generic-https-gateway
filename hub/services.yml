@@ -10,3 +10,13 @@ services:
     description: Secondary upstream service
     path: /service2/
     healthPath: /service2/health
+
+  - id: github
+    name: GitHub (external)
+    description: External link example
+    path: https://github.com/
+
+  - id: internal_tool
+    name: Internal Tool (direct)
+    description: Direct internal link example (not proxied)
+    path: http://internal-tool.local/

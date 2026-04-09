@@ -95,9 +95,15 @@
     return v;
   }
 
+  function isAbsoluteUrl(s) {
+    const v = String(s ?? "").trim();
+    return v.startsWith("http://") || v.startsWith("https://");
+  }
+
   function normalizePath(p) {
     if (!p) return "/";
     let s = String(p).trim();
+    if (isAbsoluteUrl(s)) return s;
     if (!s.startsWith("/")) s = "/" + s;
     return s;
   }
@@ -107,6 +113,7 @@
     const desc = escapeHtml(svc.description || "");
     const path = normalizePath(svc.path || "/");
     const healthPath = svc.healthPath ? normalizePath(svc.healthPath) : "";
+    const external = isAbsoluteUrl(path);
 
     const badgeClass = status?.kind || "warn";
     const badgeText = status?.label || "Unknown";
@@ -120,8 +127,10 @@
     ];
     if (healthPath) metaParts.push(`<span class="muted">health: <code>${escapeHtml(healthPath)}</code></span>`);
 
+    const targetAttrs = external ? ` target="_blank" rel="noreferrer noopener"` : "";
+
     return `
-      <a class="tile" href="${escapeHtml(path)}">
+      <a class="tile" href="${escapeHtml(path)}"${targetAttrs}>
         <div class="tileTop">
           <div class="tileTitle">${title}</div>
         </div>
@@ -141,6 +150,12 @@
     const started = performance.now();
     const healthPath = svc.healthPath ? normalizePath(svc.healthPath) : "";
     const path = normalizePath(svc.path || "/");
+
+    // External links often can't be fetched due to browser CORS, and they
+    // don't necessarily represent proxied services. Skip checks by default.
+    if (isAbsoluteUrl(path) && !healthPath) {
+      return { kind: "warn", label: "External", detail: "External link (no status check)" };
+    }
 
     // Abort after timeout so a dead upstream doesn't hang the hub.
     const controller = new AbortController();
