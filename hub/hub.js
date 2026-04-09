@@ -394,12 +394,11 @@
     const badgeText = status?.label || "Unknown";
     const badgeTitle = status?.detail || "";
 
-    const metaRows = [
-      `<span class="badge ${badgeClass}" title="${escapeHtml(badgeTitle)}"><span class="dot"></span>${escapeHtml(
-        badgeText
-      )}</span>`,
-      `<div class="tileBackPath"><code>${escapeHtml(path)}</code></div>`
-    ];
+    const statusBadge = `<span class="badge ${badgeClass} tileFrontBadge" title="${escapeHtml(badgeTitle)}"><span class="dot"></span>${escapeHtml(
+      badgeText
+    )}</span>`;
+
+    const metaRows = [`<div class="tileBackPath"><code>${escapeHtml(path)}</code></div>`];
     if (healthPath) {
       metaRows.push(`<div class="tileBackPath muted">health: <code>${escapeHtml(healthPath)}</code></div>`);
     }
@@ -413,23 +412,30 @@
         <div class="tileScene">
           <div class="tileFlip">
             <div class="tileFace tileFace--front">
-              <a class="tileNav" href="${escapeHtml(path)}"${targetAttrs}>
-                ${TILE_SERVER_ART}
-                <div class="tileTitle">${title}</div>
-              </a>
-              <button type="button" class="tileInfoBtn" aria-label="Show service details" aria-expanded="false">
-                <svg class="tileInfoIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+              <div class="tileFrontStack">
+                <a class="tileNav" href="${escapeHtml(path)}"${targetAttrs}>
+                  ${TILE_SERVER_ART}
+                  <div class="tileTitle">${title}</div>
+                </a>
+                ${statusBadge}
+              </div>
+              <button type="button" class="tileCornerBtn tileInfoBtn" aria-label="Show service details" aria-expanded="false">
+                <svg class="tileCornerIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                   <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="1.75" opacity="0.85"/>
                   <path fill="currentColor" d="M11 10h2v8h-2v-8zm0-4h2v2h-2V6z" opacity="0.9"/>
                 </svg>
               </button>
             </div>
             <div class="tileFace tileFace--back">
+              <button type="button" class="tileCornerBtn tileFlipBack" aria-label="Back to service summary">
+                <svg class="tileCornerIcon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 6l-6 6 6 6"/>
+                </svg>
+              </button>
               <div class="tileBackInner">
                 ${descBlock}
                 <div class="tileMeta tileMeta--stack">${metaRows.join("")}</div>
                 <div class="tileBackActions">
-                  <button type="button" class="btn tileFlipBack">Back</button>
                   <a class="link tileOpenLink" href="${escapeHtml(path)}"${targetAttrs}>Open service</a>
                 </div>
               </div>
@@ -488,7 +494,7 @@
     // External links often can't be fetched due to browser CORS, and they
     // don't necessarily represent proxied services. Skip checks by default.
     if (isAbsoluteUrl(path) && !healthPath) {
-      return { kind: "warn", label: "External", detail: "External link (no status check)" };
+      return { kind: "info", label: "External", detail: "External link (no status check)" };
     }
 
     // Abort after timeout so a dead upstream doesn't hang the hub.
@@ -647,7 +653,7 @@
 
       const warnings = visibleServices
         .map((svc, i) => ({ svc, st: statuses[i] }))
-        .filter((x) => x.st && x.st.kind !== "good")
+        .filter((x) => x.st && x.st.kind !== "good" && x.st.kind !== "info")
         .map((x) => ({
           name: x.svc.name || x.svc.id || "Service",
           label: x.st.label,
@@ -656,7 +662,9 @@
       renderWarnings(warnings);
 
       const upCount = statuses.filter((s) => s && s.kind === "good").length;
-      elOverall.textContent = `Status: ${upCount}/${visibleServices.length} up. (Showing ${visibleServices.length}/${services.length})`;
+      const attention = warnings.length;
+      const attentionBit = attention ? ` · ${attention} need attention` : "";
+      elOverall.textContent = `Status: ${upCount}/${visibleServices.length} up${attentionBit}. (Showing ${visibleServices.length}/${services.length})`;
     }
 
     function attachTabHandlers() {

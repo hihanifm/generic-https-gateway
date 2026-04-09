@@ -18,6 +18,17 @@
 		reverse_proxy app2:{$APP2_PORT}
 	}
 
+	# Host-process upstream (not a Docker service on this compose network).
+	# WNM_UPSTREAM is host:port as seen from the gateway container (e.g. host.docker.internal:18081).
+	# WNM_HOST_HEADER is the Host header the upstream expects (dev servers often reject the gateway's Host).
+	@wnm path /wnm /wnm/*
+	handle @wnm {
+		uri strip_prefix /wnm
+		reverse_proxy {$WNM_UPSTREAM} {
+			header_up Host {$WNM_HOST_HEADER}
+		}
+	}
+
 	# Hub landing page (static).
 	root * /srv
 

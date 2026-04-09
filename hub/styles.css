@@ -382,23 +382,26 @@ code {
 
 .warnings {
   display: grid;
-  gap: 10px;
-  padding: 14px 18px 0;
+  gap: 6px;
+  padding: 8px 18px 0;
 }
 
 .warning {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 12px 12px;
-  border: 1px solid var(--warning-border);
-  border-radius: 12px;
-  background: var(--warning-bg);
-  color: var(--warning-text);
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--control-bg);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .warning strong {
-  color: var(--warning-strong);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .grid {
@@ -472,6 +475,20 @@ html[data-theme="light"] .tile:hover {
   background: var(--tile-bg);
 }
 
+.tileFrontStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 188px;
+  padding: 16px 44px 16px 16px;
+}
+
+.tileFrontBadge {
+  flex-shrink: 0;
+}
+
 .tileFace--back {
   transform: rotateY(180deg);
   background: var(--tile-bg);
@@ -483,9 +500,6 @@ html[data-theme="light"] .tile:hover {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  height: 100%;
-  min-height: 188px;
-  padding: 16px 44px 16px 16px;
   text-decoration: none;
   color: inherit;
   outline-offset: 2px;
@@ -510,7 +524,7 @@ html[data-theme="light"] .tile:hover {
   text-align: center;
 }
 
-.tileInfoBtn {
+.tileCornerBtn {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -521,25 +535,27 @@ html[data-theme="light"] .tile:hover {
   width: 36px;
   height: 36px;
   padding: 0;
+  margin: 0;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--control-bg);
   color: var(--text);
   cursor: pointer;
+  appearance: none;
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 
-.tileInfoBtn:hover {
+.tileCornerBtn:hover {
   background: var(--control-hover-bg);
   border-color: var(--control-hover-border);
 }
 
-.tileInfoBtn:focus-visible {
+.tileCornerBtn:focus-visible {
   outline: 2px solid var(--link);
   outline-offset: 2px;
 }
 
-.tileInfoIcon {
+.tileCornerIcon {
   width: 20px;
   height: 20px;
   display: block;
@@ -551,7 +567,7 @@ html[data-theme="light"] .tile:hover {
   gap: 12px;
   height: 100%;
   min-height: 188px;
-  padding: 14px;
+  padding: 14px 48px 14px 14px;
   overflow: auto;
 }
 
@@ -576,10 +592,6 @@ html[data-theme="light"] .tile:hover {
 .tileOpenLink {
   font-size: 13px;
   font-weight: 600;
-}
-
-.tileFlipBack {
-  margin: 0;
 }
 
 .tileTop {
@@ -659,6 +671,15 @@ html[data-theme="light"] .tile:hover {
 
 .badge.warn .dot {
   background: var(--warn);
+}
+
+.badge.info {
+  border-color: var(--border);
+  background: var(--badge-bg);
+}
+
+.badge.info .dot {
+  background: var(--muted);
 }
 
 .badge.bad {

@@ -19,6 +19,12 @@ services:
     healthPath: /service2/health
     categories: mno-services
 
+  - id: wnm
+    name: WNM (host)
+    description: Process on the Docker host, reverse proxied (not a compose service)
+    path: /wnm/
+    categories: tools
+
   - id: github
     name: GitHub (external)
     description: External link example

@@ -8,6 +8,10 @@ services:
       - EXTERNAL_HTTP_PORT=${EXTERNAL_HTTP_PORT:-33001}
       - APP1_PORT=${APP1_PORT:-33101}
       - APP2_PORT=${APP2_PORT:-33102}
+      - WNM_UPSTREAM=${WNM_UPSTREAM:-host.docker.internal:18081}
+      - WNM_HOST_HEADER=${WNM_HOST_HEADER:-localhost:18081}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${EXTERNAL_HTTP_PORT:-33001}:${EXTERNAL_HTTP_PORT:-33001}"
     volumes:
